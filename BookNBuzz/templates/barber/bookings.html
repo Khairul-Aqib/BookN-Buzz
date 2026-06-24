@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Manage Bookings{% endblock %}
+{% block page_class %}page-wide{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>Manage bookings</h1>
+    <p class="lead">Browse appointments one day at a time, or jump to everything
+       still waiting for action.</p>
+  </div>
+</div>
+
+<!-- View tabs: per-date vs pending across all dates -->
+<div class="filters">
+  <a href="{{ url_for('barber.bookings') }}"
+     class="{{ 'active' if mode == 'date' else '' }}">By date</a>
+  <a href="{{ url_for('barber.bookings', view='pending') }}"
+     class="{{ 'active' if mode == 'pending' else '' }}">
+    Pending (all dates){% if pending_total %}
+      <span class="chip-badge">{{ pending_total }}</span>{% endif %}
+  </a>
+</div>
+
+{% if mode == 'date' %}
+  <!-- Date navigation -->
+  <div class="date-nav">
+    <div class="date-nav-arrows">
+      <a class="btn btn-outline btn-sm"
+         href="{{ url_for('barber.bookings', date=prev_date) }}">&lsaquo; Prev</a>
+      <a class="btn btn-outline btn-sm"
+         href="{{ url_for('barber.bookings', date=today) }}">Today</a>
+      <a class="btn btn-outline btn-sm"
+         href="{{ url_for('barber.bookings', date=next_date) }}">Next &rsaquo;</a>
+    </div>
+
+    <div class="date-heading-wrap">
+      <button type="button" id="date-heading" class="date-heading"
+              aria-haspopup="true" aria-expanded="false">
+        {{ pretty }} <span class="caret" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="date-sub muted">
+        {{ day_count }} booking{{ '' if day_count == 1 else 's' }}
+      </div>
+
+      <!-- Month calendar popover (jump to any date; dots mark busy days) -->
+      <div id="bk-pop" class="cal-popover" hidden
+           data-selected="{{ sel_date }}" data-today="{{ today }}"
+           data-counts='{{ counts | tojson }}'>
+        <div class="calendar">
+          <div class="cal-head">
+            <button type="button" class="cal-nav cal-prev" aria-label="Previous month">&lsaquo;</button>
+            <span class="cal-title"></span>
+            <button type="button" class="cal-nav cal-next" aria-label="Next month">&rsaquo;</button>
+          </div>
+          <div class="cal-weekdays">
+            <span>Mon</span><span>Tue</span><span>Wed</span>
+            <span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          <div class="cal-grid" role="grid"></div>
+          <div class="cal-legend">
+            <span class="lg lg-today">Today</span>
+            <span class="lg lg-has">Has bookings</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status filter chips, scoped to the selected date -->
+  <div class="filters">
+    <a href="{{ url_for('barber.bookings', date=sel_date) }}"
+       class="{{ 'active' if active_status == 'all' else '' }}">All</a>
+    {% for st in statuses %}
+      <a href="{{ url_for('barber.bookings', date=sel_date, status=st) }}"
+         class="{{ 'active' if active_status == st else '' }}">{{ st }}</a>
+    {% endfor %}
+  </div>
+{% else %}
+  <h2 class="pending-title">Pending &amp; unclaimed &mdash; all dates</h2>
+{% endif %}
+
+<div class="panel">
+  {% if bookings %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Time</th><th>Customer</th><th>Service</th>
+          <th>Mode</th><th class="text-right">Total</th><th>Barber</th>
+          <th>Claim / Release</th><th>Status</th><th>Update</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in bookings %}
+        <tr>
+          <td>{{ b.date }}</td>
+          <td><strong>{{ b.time_slot }}</strong></td>
+          <td>
+            {{ b.customer_name }}
+            <div class="muted">{{ b.customer_phone or b.customer_email }}</div>
+            {% if b.mode == 'mobile' and b.service_address %}
+              <div class="muted">@ {{ b.service_address }}</div>
+            {% endif %}
+          </td>
+          <td>{{ b.service_name }}</td>
+          <td>{{ 'Mobile' if b.mode == 'mobile' else 'Walk-in' }}</td>
+          <td class="text-right">{{ b.total_price | money }}</td>
+          <td class="barber-col">{% include "barber/_barber_cell.html" %}</td>
+          <td class="action-col">{% include "barber/_claim_cell.html" %}</td>
+          <td><span class="status status-{{ b.status }}">{{ b.status }}</span></td>
+          <td>{% include "barber/_status_form.html" %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty">
+      <img src="{{ url_for('static', filename='images/empty.svg') }}" alt="">
+      {% if mode == 'pending' %}
+        <p>No pending or unclaimed bookings &mdash; you're all caught up!</p>
+      {% else %}
+        <p>No bookings on this day{{ '' if active_status == 'all' else ' with that status' }}.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/bookings_calendar.js') }}"></script>
+{% endblock %}

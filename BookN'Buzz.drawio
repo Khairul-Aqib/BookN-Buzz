@@ -1,0 +1,145 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Use Case - BookN&#39;Buzz" id="polish-me-up-uc">
+    <mxGraphModel dx="2060" dy="1124" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1750" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="boundary" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontColor=#3D1A2A;strokeColor=#3D1A2A;fillColor=none;fontSize=14;" value="BookN&#39;Buzz" vertex="1">
+          <mxGeometry height="1021" width="690" x="270" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="u_register" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Register Account" vertex="1">
+          <mxGeometry height="60" width="160" x="320" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="u_browse" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Browse Packages" vertex="1">
+          <mxGeometry height="60" width="160" x="320" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="u_mode" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Choose Service Mode&#xa;(walk-in / mobile)" vertex="1">
+          <mxGeometry height="60" width="160" x="320" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="u_book" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Make Booking" vertex="1">
+          <mxGeometry height="60" width="160" x="547" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="u_view" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View My Bookings" vertex="1">
+          <mxGeometry height="60" width="160" x="318" y="444" as="geometry" />
+        </mxCell>
+        <mxCell id="u_cancel" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Cancel Booking" vertex="1">
+          <mxGeometry height="60" width="160" x="313" y="524" as="geometry" />
+        </mxCell>
+        <mxCell id="u_pin" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Service Address" vertex="1">
+          <mxGeometry height="60" width="160" x="619" y="488" as="geometry" />
+        </mxCell>
+        <mxCell id="u_login" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Login" vertex="1">
+          <mxGeometry height="60" width="160" x="306" y="612" as="geometry" />
+        </mxCell>
+        <mxCell id="u_notif" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Notifications" vertex="1">
+          <mxGeometry height="60" width="160" x="320" y="685" as="geometry" />
+        </mxCell>
+        <mxCell id="u_dash" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Dashboard" vertex="1">
+          <mxGeometry height="60" width="160" x="645" y="552" as="geometry" />
+        </mxCell>
+        <mxCell id="u_mbook" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Manage Bookings" vertex="1">
+          <mxGeometry height="60" width="160" x="743" y="1053" as="geometry" />
+        </mxCell>
+        <mxCell id="u_cust" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Manage Customers" vertex="1">
+          <mxGeometry height="60" width="160" x="609" y="625" as="geometry" />
+        </mxCell>
+        <mxCell id="u_items" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Manage Items &amp; Services" vertex="1">
+          <mxGeometry height="60" width="160" x="524" y="753" as="geometry" />
+        </mxCell>
+        <mxCell id="u_avail" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Manage Availability" vertex="1">
+          <mxGeometry height="60" width="160" x="643" y="987" as="geometry" />
+        </mxCell>
+        <mxCell id="u_create" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Barber Account" vertex="1">
+          <mxGeometry height="60" width="160" x="592" y="921" as="geometry" />
+        </mxCell>
+        <mxCell id="u_slot" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Select Time Slot" vertex="1">
+          <mxGeometry height="60" width="160" x="760" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="u_status" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Booking Status" vertex="1">
+          <mxGeometry height="60" width="160" x="521" y="1063" as="geometry" />
+        </mxCell>
+        <mxCell id="a_cust" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontStyle=1;" value="Customer" vertex="1">
+          <mxGeometry height="80" width="40" x="40" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="a_mani" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontStyle=1;" value="Barber" vertex="1">
+          <mxGeometry height="80" width="40" x="989" y="708" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="a_cust" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_login">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="a_cust" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_notif">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="a_cust" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_register">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="a_cust" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_browse">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="a_cust" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_mode">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="a_cust" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_book">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="a_cust" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_view">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="a_cust" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_cancel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="a_mani" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_login">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="a_mani" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_notif">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="a_mani" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_dash">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="a_mani" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_mbook">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="a_mani" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_cust">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="a_mani" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_items">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="a_mani" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_sales">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="a_mani" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_avail">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" edge="1" parent="1" source="a_mani" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_create">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" edge="1" parent="1" source="u_book" style="endArrow=open;dashed=1;html=1;strokeColor=#6B5560;fontColor=#7A5A68;fontSize=11;edgeStyle=none;rounded=0;startArrow=none;" target="u_slot" value="«include»">
+          <mxGeometry relative="1" x="-0.0368" as="geometry">
+            <mxPoint y="-1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e21" edge="1" parent="1" source="u_mbook" style="endArrow=open;dashed=1;html=1;strokeColor=#6B5560;fontColor=#7A5A68;fontSize=11;edgeStyle=none;rounded=0;startArrow=none;" target="u_status" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fMrDyD6lEDSqfSje4kCA-2" edge="1" parent="1" source="a_mani" style="endArrow=none;html=1;strokeColor=#6B5560;edgeStyle=none;rounded=0;" target="u_sales" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1009" y="781" as="sourcePoint" />
+            <mxPoint x="526" y="1205" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="u_sales" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="VIew Sales" vertex="1">
+          <mxGeometry height="60" width="160" x="574" y="834" as="geometry" />
+        </mxCell>
+        <mxCell id="fMrDyD6lEDSqfSje4kCA-5" edge="1" parent="1" source="u_book" style="endArrow=open;dashed=1;html=1;strokeColor=#6B5560;fontColor=#7A5A68;fontSize=11;edgeStyle=none;rounded=0;startArrow=none;" target="u_pin" value="«include»">
+          <mxGeometry relative="1" x="-0.0368" as="geometry">
+            <mxPoint y="-1" as="offset" />
+            <mxPoint x="697" y="430" as="sourcePoint" />
+            <mxPoint x="790" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

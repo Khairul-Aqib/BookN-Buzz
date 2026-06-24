@@ -1,0 +1,25 @@
+# Virtual environment
+.venv/
+
+# Claude Code working files
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment / secrets
+.env
+
+# SQLite database (regenerable via seed.py)
+*.db
+*.sqlite
+*.sqlite3
+
+# Docs & exports (keep source only)
+*.md
+*.pdf
+
+# Editors
+.vscode/
+.idea/

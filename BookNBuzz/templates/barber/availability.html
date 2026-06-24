@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Availability{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>Availability</h1>
+    <p class="lead">Set the hours you work each week, and block off individual
+       days. Customers can only book times that fall inside your open hours and
+       on days that aren't blocked.</p>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <!-- 1. Weekly schedule (edit in place) -->
+  <div class="panel">
+    <h3>Weekly schedule</h3>
+    <p class="muted">Flip a day on or off. While a day is open, edit its hours
+       and hit Save.</p>
+
+    <div class="week-list">
+      {% for d in schedule %}
+      <form class="day-row {{ 'is-closed' if not d.open }}" method="post"
+            action="{{ url_for('barber.set_weekday') }}">
+        <input type="hidden" name="weekday" value="{{ d.weekday }}">
+        <span class="day-name">{{ weekdays[d.weekday] }}</span>
+
+        <label class="switch" title="Open or close this day">
+          <input type="checkbox" name="open" onchange="this.form.submit()"
+                 {{ 'checked' if d.open else '' }}>
+          <span class="slider"></span>
+        </label>
+
+        {% if d.open %}
+          <div class="day-times">
+            <label class="time-field">From
+              <input type="time" name="start_time" value="{{ d.start }}" required>
+            </label>
+            <label class="time-field">To
+              <input type="time" name="end_time" value="{{ d.end }}" required>
+            </label>
+            <button class="btn btn-solid btn-sm" type="submit">Save</button>
+          </div>
+        {% else %}
+          <span class="day-closed">Closed</span>
+        {% endif %}
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 2. Block specific days (calendar) -->
+  <div class="panel">
+    <h3>Block specific days</h3>
+    <p class="muted">Click a date to block it (holiday, day off…). Click a
+       blocked date again to unblock it.</p>
+
+    {# One hidden form the calendar submits when a date is clicked. #}
+    <form id="block-form" method="post"
+          action="{{ url_for('barber.toggle_block') }}">
+      <input type="hidden" name="date" id="block-date">
+    </form>
+
+    <div id="block-calendar" class="calendar"
+         data-today="{{ today }}"
+         data-blocked='{{ blocked_dates | tojson }}'>
+      <div class="cal-head">
+        <button type="button" class="cal-nav cal-prev" aria-label="Previous month">&lsaquo;</button>
+        <span class="cal-title"></span>
+        <button type="button" class="cal-nav cal-next" aria-label="Next month">&rsaquo;</button>
+      </div>
+      <div class="cal-weekdays">
+        <span>Mon</span><span>Tue</span><span>Wed</span>
+        <span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+      </div>
+      <div class="cal-grid" role="grid"></div>
+      <div class="cal-legend">
+        <span class="lg lg-open">Available</span>
+        <span class="lg lg-blocked-day">Blocked</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/availability.js') }}"></script>
+{% endblock %}

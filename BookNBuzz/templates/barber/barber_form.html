@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Create Barber Account{% endblock %}
+
+{% block content %}
+<p><a class="muted" href="{{ url_for('barber.dashboard') }}">&larr; Back to dashboard</a></p>
+
+<div class="panel narrow">
+  <h1>Create barber account</h1>
+  <p class="lead">Add another barber/admin to the shop.</p>
+
+  <form method="post" action="{{ url_for('barber.barber_new') }}">
+    <div class="form-row">
+      <label for="name">Full name</label>
+      <input type="text" id="name" name="name" value="{{ form.name or '' }}" required autofocus>
+    </div>
+    <div class="form-row">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="{{ form.email or '' }}" required>
+    </div>
+    <div class="form-row">
+      <label for="phone">Phone <span class="muted">(optional)</span></label>
+      <input type="text" id="phone" name="phone" value="{{ form.phone or '' }}">
+    </div>
+    <div class="form-row">
+      <label for="password">Temporary password</label>
+      <input type="password" id="password" name="password" required>
+      <span class="form-hint">At least 6 characters.</span>
+    </div>
+    <button class="btn btn-solid btn-block" type="submit">Create barber</button>
+  </form>
+</div>
+{% endblock %}

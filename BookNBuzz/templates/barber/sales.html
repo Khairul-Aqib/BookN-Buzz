@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Sales{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>Sales report</h1>
+    <p class="lead">Revenue from completed bookings.</p>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat accent-stat">
+    <div class="num">{{ total | money }}</div>
+    <div class="label">Total revenue</div>
+  </div>
+  <div class="stat">
+    <div class="num">{{ completed }}</div>
+    <div class="label">Completed bookings</div>
+  </div>
+</div>
+
+<div class="panel">
+  <h3>Revenue by service</h3>
+  {% if rows %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Service</th><th>Units sold</th><th>Revenue</th></tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td><strong>{{ r.service_name }}</strong></td>
+          <td>{{ r.sold }}</td>
+          <td>{{ r.revenue | money }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th>Total</th><th></th><th>{{ total | money }}</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {% else %}
+    <p class="muted">No completed bookings yet — revenue will appear here once
+       bookings are marked completed.</p>
+  {% endif %}
+</div>
+{% endblock %}

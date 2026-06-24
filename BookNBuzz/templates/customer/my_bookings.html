@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>My bookings</h1>
+    <p class="lead">Track your appointments and their status.</p>
+  </div>
+  <a class="btn btn-solid" href="{{ url_for('customer.packages') }}">Book another</a>
+</div>
+
+{% if bookings %}
+<div class="panel">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Package</th><th>Date</th><th>Time</th><th>Mode</th>
+          <th>Barber</th><th>Total</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in bookings %}
+        <tr>
+          <td>
+            <strong>{{ b.service_name }}</strong>
+            {% if b.mode == 'mobile' and b.service_address %}
+              <div class="muted">@ {{ b.service_address }}</div>
+            {% endif %}
+          </td>
+          <td>{{ b.date }}</td>
+          <td>{{ b.time_slot }}</td>
+          <td>{{ 'Mobile' if b.mode == 'mobile' else 'Walk-in' }}</td>
+          <td>{{ b.barber_name if b.barber_name else 'Not yet assigned' }}</td>
+          <td>{{ b.total_price | money }}</td>
+          <td><span class="status status-{{ b.status }}">{{ b.status }}</span></td>
+          <td>
+            {% if b.status in ('pending', 'confirmed') %}
+              <form class="inline-form" method="post"
+                    action="{{ url_for('customer.cancel_booking', booking_id=b.id) }}"
+                    onsubmit="return confirm('Cancel this booking?');">
+                <button class="btn btn-danger btn-sm" type="submit">Cancel</button>
+              </form>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="empty">
+  <img src="{{ url_for('static', filename='images/empty.svg') }}" alt="">
+  <p>You have no bookings yet.</p>
+  <a class="btn btn-solid" href="{{ url_for('customer.packages') }}">Browse packages</a>
+</div>
+{% endif %}
+{% endblock %}

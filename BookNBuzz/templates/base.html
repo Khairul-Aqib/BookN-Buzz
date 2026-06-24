@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}BookN'Buzz{% endblock %} · BookN'Buzz</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='images/logo.svg') }}">
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="{{ url_for('customer.home') }}">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="" class="brand-mark">
+        <span>BookN<span class="accent">'</span>Buzz</span>
+      </a>
+
+      <nav class="nav-links">
+        {% if current_user and current_user.role == 'barber' %}
+          <a href="{{ url_for('barber.dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('barber.bookings') }}">Bookings</a>
+          <a href="{{ url_for('barber.services') }}">Services</a>
+          <a href="{{ url_for('barber.customers') }}">Customers</a>
+          <a href="{{ url_for('barber.availability') }}">Availability</a>
+          <a href="{{ url_for('barber.sales') }}">Sales</a>
+          <a class="btn btn-ghost" href="{{ url_for('auth.logout') }}">Logout</a>
+        {% else %}
+          <a href="{{ url_for('customer.packages') }}">Packages</a>
+          {% if current_user %}
+            <a href="{{ url_for('customer.my_bookings') }}">My Bookings</a>
+            <a class="has-badge" href="{{ url_for('customer.notifications') }}">
+              Notifications
+              {% if unread_count %}<span class="badge">{{ unread_count }}</span>{% endif %}
+            </a>
+            <a class="btn btn-ghost" href="{{ url_for('auth.logout') }}">Logout</a>
+          {% else %}
+            <a href="{{ url_for('auth.login') }}">Login</a>
+            <a class="btn btn-solid" href="{{ url_for('auth.register') }}">Sign up</a>
+          {% endif %}
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="page {% block page_class %}{% endblock %}">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>BookN'Buzz · Sharp cuts, booked in seconds.</span>
+    </div>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

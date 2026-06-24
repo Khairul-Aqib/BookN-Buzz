@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Sharp cuts, booked in seconds{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">BookN'Buzz Barber Co.</p>
+    <h1>Fresh cuts, <span class="accent">booked</span> in seconds.</h1>
+    <p>Skip the wait. Browse our grooming packages, pick a time that fits the
+       chair, and lock it in — walk in to the shop or have us come to you.</p>
+    <div class="hero-cta">
+      <a class="btn btn-solid" href="{{ url_for('customer.packages') }}">Book Now</a>
+      {% if not current_user %}
+        <a class="btn btn-outline" href="{{ url_for('auth.register') }}">Create account</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="hero-art">
+    <img src="{{ url_for('static', filename='images/hero.svg') }}" alt="Barber pole and tools">
+  </div>
+</section>
+
+<div class="section-head" style="margin-top:2.4rem;">
+  <div>
+    <h2>Popular packages</h2>
+    <p class="lead">A taste of the chair. See the full menu for everything.</p>
+  </div>
+  <a class="btn btn-outline" href="{{ url_for('customer.packages') }}">View all packages</a>
+</div>
+
+<div class="grid">
+  {% for s in services %}
+    {% include "customer/_service_card.html" %}
+  {% endfor %}
+</div>
+{% endblock %}

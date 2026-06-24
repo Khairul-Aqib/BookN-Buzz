@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Manage Services{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>Items &amp; Services</h1>
+    <p class="lead">Create, edit and remove the packages on offer.</p>
+  </div>
+  <a class="btn btn-solid" href="{{ url_for('barber.service_new') }}">+ New service</a>
+</div>
+
+<div class="panel">
+  {% if services %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Duration</th><th>Price</th><th>Active</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for s in services %}
+        <tr>
+          <td>
+            <strong>{{ s.name }}</strong>
+            <div class="muted">{{ s.description|truncate(60) }}</div>
+          </td>
+          <td>{{ s.duration_minutes }} min</td>
+          <td>{{ s.price | money }}</td>
+          <td>
+            {% if s.active %}<span class="status status-completed">Active</span>
+            {% else %}<span class="status status-cancelled">Hidden</span>{% endif %}
+          </td>
+          <td class="row-actions">
+            <a class="btn btn-outline btn-sm" href="{{ url_for('barber.service_edit', service_id=s.id) }}">Edit</a>
+            <form class="inline-form" method="post"
+                  action="{{ url_for('barber.service_delete', service_id=s.id) }}"
+                  onsubmit="return confirm('Delete {{ s.name }}?');">
+              <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="muted">No services yet. Add your first one.</p>
+  {% endif %}
+</div>
+{% endblock %}

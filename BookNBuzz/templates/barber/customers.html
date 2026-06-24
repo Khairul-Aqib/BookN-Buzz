@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>Customers</h1>
+    <p class="lead">Everyone registered with the shop.</p>
+  </div>
+</div>
+
+<div class="panel">
+  {% if customers %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Phone</th><th>Bookings</th></tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td><strong>{{ c.name }}</strong></td>
+          <td>{{ c.email }}</td>
+          <td>{{ c.phone or '—' }}</td>
+          <td>{{ c.booking_count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="muted">No customers yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
