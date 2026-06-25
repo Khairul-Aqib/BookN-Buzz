@@ -22,6 +22,16 @@ import db
 
 
 # --------------------------------------------------------------------------- #
+#  Shop-wide settings / constants
+# --------------------------------------------------------------------------- #
+# Flat surcharge added to a booking when the barber travels to the customer
+# (mobile mode). Walk-in bookings have no fee. Defined here ONCE so every layer
+# - booking confirm, the booking summary, seed data - uses the same value and
+# it can be changed in a single place.
+MOBILE_SERVICE_FEE = 25.0
+
+
+# --------------------------------------------------------------------------- #
 #  User  (base class)
 # --------------------------------------------------------------------------- #
 class User:
@@ -37,6 +47,16 @@ class User:
         self.password_hash = password_hash
         self.role = role or self.__class__.role
         self.phone = phone
+
+    @property
+    def initials(self):
+        """1-2 letter initials from the name, for avatar fallbacks in the UI."""
+        parts = [p for p in (self.name or "").split() if p]
+        if not parts:
+            return "?"
+        if len(parts) == 1:
+            return parts[0][0].upper()
+        return (parts[0][0] + parts[-1][0]).upper()
 
     # ---- password handling -------------------------------------------------
     def set_password(self, raw_password):
@@ -59,6 +79,18 @@ class User:
         self.name, self.phone = name, phone
         db.execute("UPDATE users SET name = ?, phone = ? WHERE id = ?",
                    (name, phone, self.id))
+
+    def update_account(self, name, email, phone):
+        """Persist edits to this user's own details (name, email, phone)."""
+        self.name, self.email, self.phone = name, email, phone
+        db.execute("UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?",
+                   (name, email, phone, self.id))
+
+    def change_password(self, raw_password):
+        """Hash and persist a new password for this user."""
+        self.set_password(raw_password)
+        db.execute("UPDATE users SET password_hash = ? WHERE id = ?",
+                   (self.password_hash, self.id))
 
     # ---- factory helpers ---------------------------------------------------
     @staticmethod
@@ -85,6 +117,13 @@ class User:
     def email_exists(cls, email):
         return db.query("SELECT 1 FROM users WHERE email = ?",
                         (email,), one=True) is not None
+
+    @classmethod
+    def email_taken_by_other(cls, email, user_id):
+        """True if a DIFFERENT user already uses this email (uniqueness check
+        for profile edits, where keeping your own email must be allowed)."""
+        return db.query("SELECT 1 FROM users WHERE email = ? AND id != ?",
+                        (email, user_id), one=True) is not None
 
 
 # --------------------------------------------------------------------------- #
@@ -348,13 +387,44 @@ class Availability:
                    (avail_id, barber_id))
 
     # ---- the core scheduling logic ----------------------------------------
+    @staticmethod
+    def _to_minutes(hhmm):
+        """'HH:MM' -> minutes since midnight (None if unparseable)."""
+        try:
+            h, m = hhmm.split(":")
+            return int(h) * 60 + int(m)
+        except (ValueError, AttributeError):
+            return None
+
+    @classmethod
+    def booked_intervals(cls, barber_id, on_date):
+        """[(start_min, end_min)] for this barber's active bookings on a date.
+
+        Each booking occupies its slot start through start + service duration,
+        so a 60-min service blocks the slots it overlaps - not just its start.
+        """
+        rows = db.query(
+            """SELECT b.time_slot, s.duration_minutes
+               FROM bookings b
+               JOIN services s ON s.id = b.service_id
+               WHERE b.barber_id = ? AND b.date = ? AND b.status != 'cancelled'""",
+            (barber_id, on_date))
+        intervals = []
+        for r in rows:
+            start = cls._to_minutes(r["time_slot"])
+            if start is None:
+                continue
+            intervals.append((start, start + int(r["duration_minutes"] or 0)))
+        return intervals
+
     @classmethod
     def open_slots(cls, barber_id, on_date, duration_minutes=30):
-        """Return the list of free 'HH:MM' slots for a barber on a given date.
+        """Return the list of free 'HH:MM' slots for THIS barber on a date.
 
         A slot is offered only when it (a) falls inside the barber's working
-        hours for that weekday, (b) is not on a blocked day, and (c) is not
-        already taken by a non-cancelled booking. Past slots for today are
+        hours for that weekday, (b) is not on one of the barber's blocked days,
+        (c) leaves room for the full service before closing time, and (d) does
+        not overlap a booking that barber already has. Past slots for today are
         also hidden.
         """
         try:
@@ -382,14 +452,8 @@ class Availability:
         if not windows:
             return []
 
-        # Slots already booked shop-wide (exclude cancelled). A slot is taken
-        # regardless of which barber (if any) has claimed it.
-        taken = {
-            r["time_slot"] for r in db.query(
-                """SELECT time_slot FROM bookings
-                   WHERE date = ? AND status != 'cancelled'""",
-                (on_date,))
-        }
+        # This barber's existing bookings (as minute intervals) for the date.
+        busy = cls.booked_intervals(barber_id, on_date)
 
         now = datetime.now()
         slots = []
@@ -399,8 +463,12 @@ class Availability:
             # Last start time that still leaves room for the service.
             while cursor + timedelta(minutes=duration_minutes) <= end:
                 label = cursor.strftime("%H:%M")
+                slot_start = cursor.hour * 60 + cursor.minute
+                slot_end = slot_start + duration_minutes
+                overlaps = any(slot_start < b_end and b_start < slot_end
+                               for b_start, b_end in busy)
                 slot_dt = datetime.combine(d, cursor.time())
-                if label not in taken and slot_dt > now:
+                if not overlaps and slot_dt > now:
                     slots.append(label)
                 cursor += timedelta(minutes=cls.SLOT_MINUTES)
         return sorted(set(slots))
@@ -428,15 +496,28 @@ class Booking:
         self.total_price = total_price
         self.created_at = created_at
 
+    # ---- pricing -----------------------------------------------------------
+    @staticmethod
+    def mobile_fee(mode):
+        """The surcharge for a booking mode: RM25 for mobile, nothing for
+        walk-in. Uses the single MOBILE_SERVICE_FEE constant."""
+        return MOBILE_SERVICE_FEE if mode == "mobile" else 0.0
+
+    @classmethod
+    def compute_total(cls, service_price, mode):
+        """Authoritative total = package price + any mobile fee. Always used
+        server-side on confirm so the client total is never trusted."""
+        return float(service_price) + cls.mobile_fee(mode)
+
     # ---- creation ----------------------------------------------------------
     @classmethod
-    def is_slot_free(cls, on_date, time_slot):
-        """True if no non-cancelled booking holds this date + slot (shop-wide)."""
+    def is_slot_free(cls, barber_id, on_date, time_slot):
+        """True if THIS barber has no non-cancelled booking at this date+slot."""
         taken = db.query(
             """SELECT 1 FROM bookings
-               WHERE date = ? AND time_slot = ?
+               WHERE barber_id = ? AND date = ? AND time_slot = ?
                  AND status != 'cancelled'""",
-            (on_date, time_slot), one=True)
+            (barber_id, on_date, time_slot), one=True)
         return taken is None
 
     def save(self):
@@ -534,7 +615,25 @@ class Booking:
     def all(cls):
         return cls.list()
 
-    # ---- claiming (any barber can claim an unclaimed booking) --------------
+    # ---- confirm (owning barber accepts their assigned pending booking) ----
+    @classmethod
+    def confirm(cls, booking_id, barber_id):
+        """Confirm a pending booking already assigned to this barber.
+
+        Customers now pick the barber, so the barber's job is simply to accept
+        (pending -> confirmed) the appointment that arrived assigned to them.
+        Returns True if the booking is now confirmed for this barber.
+        """
+        db.execute(
+            """UPDATE bookings SET status = 'confirmed'
+               WHERE id = ? AND barber_id = ? AND status = 'pending'""",
+            (booking_id, barber_id))
+        row = db.query(
+            "SELECT status FROM bookings WHERE id = ? AND barber_id = ?",
+            (booking_id, barber_id), one=True)
+        return row is not None and row["status"] == "confirmed"
+
+    # ---- claiming (any barber can claim a LEGACY unclaimed booking) --------
     @classmethod
     def claim(cls, booking_id, barber_id):
         """Claim an unclaimed pending booking: assign the barber AND confirm it.

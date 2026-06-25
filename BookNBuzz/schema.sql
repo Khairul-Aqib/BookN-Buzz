@@ -44,9 +44,10 @@ CREATE TABLE IF NOT EXISTS availability (
     FOREIGN KEY (barber_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- Bookings link a Customer and a Service. The Barber is optional: a new
--- booking is created "unclaimed" (barber_id NULL = shown as N/A) and any
--- barber can later claim it.
+-- Bookings link a Customer, a Service and a Barber. The customer now picks a
+-- specific barber when booking, so barber_id is normally set at creation time
+-- (status 'pending' until that barber confirms). barber_id stays nullable only
+-- to support any legacy "unclaimed" bookings created before this change.
 CREATE TABLE IF NOT EXISTS bookings (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_id     INTEGER NOT NULL,
@@ -65,12 +66,13 @@ CREATE TABLE IF NOT EXISTS bookings (
     FOREIGN KEY (service_id)  REFERENCES services (id)
 );
 
--- Database-level guard against double-booking the shop for the same date +
--- time slot. barber_id is intentionally NOT part of this index: a booking
--- starts unclaimed (barber_id NULL) and any barber may later claim it, but
--- only one customer can hold a given slot. Cancelled bookings free the slot.
+-- Database-level guard against double-booking the SAME BARBER for the same
+-- date + time slot. Because customers now choose a specific barber, two
+-- different barbers can each hold the same date+slot, but one barber can't be
+-- booked twice. Cancelled bookings free the slot. (SQLite treats NULLs as
+-- distinct, so legacy unclaimed rows with barber_id NULL are not constrained.)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_no_double_booking
-    ON bookings (date, time_slot)
+    ON bookings (barber_id, date, time_slot)
     WHERE status != 'cancelled';
 
 -- Customer notifications (e.g. when a barber updates a booking status).

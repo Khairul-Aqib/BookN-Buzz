@@ -2,21 +2,24 @@
 {% block title %}Book {{ service.name }}{% endblock %}
 
 {% block content %}
-<p><a class="muted" href="{{ url_for('customer.service_detail', service_id=service.id) }}">&larr; Back to {{ service.name }}</a></p>
+<p><a class="muted" href="{{ url_for('customer.book', service_id=service.id) }}">&larr; Change barber</a></p>
 
 <div class="steps">
-  <div class="step active"><span class="dot">1</span> Mode &amp; date</div>
-  <div class="step {{ 'active' if searched else '' }}"><span class="dot">2</span> Pick a time</div>
-  <div class="step"><span class="dot">3</span> Confirm</div>
+  <div class="step done"><span class="dot">1</span> Pick barber</div>
+  <div class="step active"><span class="dot">2</span> Date &amp; time</div>
+  <div class="step {{ 'active' if searched else '' }}"><span class="dot">3</span> Confirm</div>
 </div>
 
 <h1>Book: {{ service.name }}</h1>
-<p class="lead">{{ service.price | money }} · {{ service.duration_minutes }} min · a barber will be assigned after booking</p>
+<p class="lead">{{ service.price | money }} · {{ service.duration_minutes }} min · with
+  <strong>{{ barber.name }}</strong></p>
 
 <!-- Booking step: two columns. Left = mode + calendar (+ mobile address),
-     Right = available time slots + live summary + confirm. -->
+     Right = available time slots + live summary + confirm. Calendar and slots
+     reflect THIS barber's hours / blocked days. -->
 <div class="panel booking-panel"
-     data-slots-url="{{ url_for('customer.book_slots', service_id=service.id) }}">
+     data-slots-url="{{ url_for('customer.book_slots', service_id=service.id) }}"
+     data-barber-id="{{ barber.id }}">
   <div class="booking-layout">
 
     <!-- LEFT column ---------------------------------------------------------->
@@ -24,7 +27,7 @@
       {# No-JS path: this GET form reloads the page with the chosen date's
          slots. With JS, calendar.js loads slots on date click and hides the
          submit button below. #}
-      <form method="get" action="{{ url_for('customer.book', service_id=service.id) }}" id="dateForm">
+      <form method="get" action="{{ url_for('customer.book_times', service_id=service.id, barber_id=barber.id) }}" id="dateForm">
         <h3>Choose mode &amp; date</h3>
 
         <div class="mode-options" style="margin:0.8rem 0 1rem;">
@@ -91,6 +94,7 @@
     <!-- RIGHT column --------------------------------------------------------->
     <div class="booking-right">
       <form method="post" action="{{ url_for('customer.confirm_booking', service_id=service.id) }}" id="confirmForm">
+        <input type="hidden" name="barber_id" value="{{ barber.id }}">
         <input type="hidden" name="mode" id="confirmMode" value="{{ mode }}">
         <input type="hidden" name="date" id="confirmDate" value="{{ selected_date }}">
 
@@ -111,7 +115,7 @@
           {% elif searched %}
             <div class="empty">
               <img src="{{ url_for('static', filename='images/empty.svg') }}" alt="">
-              <p>No open slots for {{ selected_date }}. The barber may be fully booked,
+              <p>No open times for this date. {{ barber.name }} may be fully booked,
                  off, or that day is blocked. Try another date.</p>
             </div>
           {% else %}
@@ -119,13 +123,22 @@
           {% endif %}
         </div>
 
-        <div class="summary-box booking-summary">
+        <div class="summary-box booking-summary"
+             data-package-price="{{ '%.2f'|format(service.price) }}"
+             data-mobile-fee="{{ '%.2f'|format(mobile_fee) }}">
           <dl>
-            <dt>Package</dt><dd>{{ service.name }}</dd>
+            <dt>Service</dt><dd>{{ service.name }}</dd>
+            <dt>Barber</dt><dd>{{ barber.name }}</dd>
             <dt>Mode</dt><dd id="sumMode">{{ 'Mobile' if mode == 'mobile' else 'Walk-in' }}</dd>
             <dt>Date</dt><dd id="sumDate">{{ selected_date_label or '—' }}</dd>
             <dt>Time</dt><dd id="sumTime">—</dd>
-            <dt>Total</dt><dd>{{ service.price | money }}</dd>
+          </dl>
+          <dl class="price-breakdown">
+            <dt>Package</dt><dd>{{ service.price | money }}</dd>
+            <dt class="fee-row" id="feeLabel" {{ '' if mode == 'mobile' else 'hidden' }}>Mobile fee</dt>
+            <dd class="fee-row" id="feeValue" {{ '' if mode == 'mobile' else 'hidden' }}>{{ mobile_fee | money }}</dd>
+            <dt class="total-label">Total</dt>
+            <dd class="total-value" id="sumTotal">{{ (service.price + (mobile_fee if mode == 'mobile' else 0)) | money }}</dd>
           </dl>
         </div>
 

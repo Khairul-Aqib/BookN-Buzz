@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}My Account{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>My account</h1>
+    <p class="lead">Manage your personal details and password.</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('customer.my_bookings') }}">My bookings</a>
+</div>
+
+{% include "account/_profile_forms.html" %}
+{% endblock %}

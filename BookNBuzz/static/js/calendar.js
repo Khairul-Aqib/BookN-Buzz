@@ -148,6 +148,7 @@
   // field, and keep the booking summary updating live as selections change.
   var panel = document.querySelector(".booking-panel");
   var slotsUrl = panel ? panel.dataset.slotsUrl : "";
+  var barberId = panel ? panel.dataset.barberId : "";
   var slotsArea = document.getElementById("slotsArea");
   var slotsHeading = document.getElementById("slotsHeading");
   var confirmMode = document.getElementById("confirmMode");
@@ -157,6 +158,24 @@
   var sumMode = document.getElementById("sumMode");
   var sumDate = document.getElementById("sumDate");
   var sumTime = document.getElementById("sumTime");
+  var summaryBox = document.querySelector(".booking-summary");
+  var feeLabel = document.getElementById("feeLabel");
+  var feeValue = document.getElementById("feeValue");
+  var sumTotal = document.getElementById("sumTotal");
+  var packagePrice = summaryBox ? parseFloat(summaryBox.dataset.packagePrice || "0") : 0;
+  var mobileFee = summaryBox ? parseFloat(summaryBox.dataset.mobileFee || "0") : 0;
+
+  function money(n) { return "RM" + (Number(n) || 0).toFixed(2); }
+
+  // Show/hide the mobile-fee line and recompute the total for the given mode.
+  // The authoritative total is still computed server-side on confirm; this only
+  // keeps the on-screen summary in sync.
+  function updateFee(isMobile) {
+    var fee = isMobile ? mobileFee : 0;
+    if (feeLabel) feeLabel.hidden = !isMobile;
+    if (feeValue) { feeValue.hidden = !isMobile; feeValue.textContent = money(mobileFee); }
+    if (sumTotal) sumTotal.textContent = money(packagePrice + fee);
+  }
   var addressBlock = document.getElementById("addressBlock");
   var addressField = document.getElementById("service_address");
   var findBtn = document.getElementById("findBtn");
@@ -179,8 +198,8 @@
 
     if (!slots.length) {
       slotsArea.innerHTML =
-        '<p class="slots-hint muted">No open slots for this date. ' +
-        'The barber may be fully booked or off. Try another date.</p>';
+        '<p class="slots-hint muted">No open times for this date. ' +
+        'This barber may be fully booked or off. Try another date.</p>';
       if (confirmBtn) confirmBtn.disabled = true;
       return;
     }
@@ -201,7 +220,8 @@
     if (!slotsUrl || !slotsArea) return;
     slotsArea.innerHTML = '<p class="slots-hint muted">Loading times' + DASH + '</p>';
     if (confirmBtn) confirmBtn.disabled = true;
-    fetch(slotsUrl + "?date=" + encodeURIComponent(ds), {
+    fetch(slotsUrl + "?barber_id=" + encodeURIComponent(barberId) +
+          "&date=" + encodeURIComponent(ds), {
       headers: { "X-Requested-With": "fetch" }
     })
       .then(function (r) { return r.json(); })
@@ -219,10 +239,14 @@
     if (sumMode) sumMode.textContent = isMobile ? "Mobile" : "Walk-in";
     if (addressBlock) addressBlock.hidden = !isMobile;
     if (addressField) addressField.required = isMobile;
+    updateFee(isMobile);
   }
   for (var mi = 0; mi < modeRadios.length; mi++) {
     modeRadios[mi].addEventListener("change", function () { applyMode(this.value); });
   }
+  // Sync the fee/total with whichever mode is checked on load.
+  var checkedMode = document.querySelector('input[name="mode"]:checked');
+  if (checkedMode) applyMode(checkedMode.value);
 
   // Live "Time" in the summary as slots are clicked (works for server-rendered
   // slots too, via event delegation).

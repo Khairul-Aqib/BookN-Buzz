@@ -15,6 +15,7 @@ from flask import (Blueprint, render_template, request, redirect, url_for,
 from model import (Service, Booking, Availability, Barber, Customer, User,
                    Notification)
 from auth_utils import barber_required, current_user
+from profile_service import apply_account_update
 import db
 
 barber_bp = Blueprint("barber", __name__, url_prefix="/barber")
@@ -190,6 +191,21 @@ def barber_new():
 
 
 # --------------------------------------------------------------------------- #
+#  Profile  (view + update own details / password)
+# --------------------------------------------------------------------------- #
+@barber_bp.route("/profile", methods=["GET", "POST"])
+@barber_required
+def profile():
+    barber = current_user()
+    if request.method == "POST":
+        apply_account_update(barber)  # validates, persists + flashes
+        return redirect(url_for("barber.profile"))
+
+    return render_template("barber/profile.html",
+                           action_url=url_for("barber.profile"))
+
+
+# --------------------------------------------------------------------------- #
 #  Manage Availability  (working hours / block days)
 # --------------------------------------------------------------------------- #
 @barber_bp.route("/availability")
@@ -293,6 +309,33 @@ def bookings():
         next_date=(d + timedelta(days=1)).isoformat(),
         today=today, counts=counts, pending_total=pending_total,
         active_status=status or "all", statuses=Booking.STATUSES)
+
+
+@barber_bp.route("/bookings/<int:booking_id>/confirm", methods=["POST"])
+@barber_required
+def confirm_booking(booking_id):
+    """Confirm a pending booking the customer assigned to this barber.
+
+    Customers now choose their barber, so new bookings arrive already assigned
+    and pending. The owning barber accepts them here (pending -> confirmed).
+    """
+    barber = current_user()
+    booking = Booking.get(booking_id)
+    if booking is None:
+        abort(404)
+    if booking["barber_id"] != barber.id:
+        flash("You can only confirm bookings assigned to you.", "error")
+    elif booking["status"] != "pending":
+        flash("Only a pending booking can be confirmed.", "error")
+    elif Booking.confirm(booking_id, barber.id):
+        Notification.push(
+            booking["customer_id"],
+            f"{barber.name} confirmed your {booking['service_name']} booking on "
+            f"{booking['date']} at {booking['time_slot']}. See you then!")
+        flash(f"Booking #{booking_id} confirmed.", "success")
+    else:
+        flash("Could not confirm that booking.", "error")
+    return redirect(request.referrer or url_for("barber.bookings"))
 
 
 @barber_bp.route("/bookings/<int:booking_id>/claim", methods=["POST"])

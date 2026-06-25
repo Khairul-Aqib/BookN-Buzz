@@ -12,6 +12,7 @@ from flask import (Blueprint, render_template, request, redirect, url_for,
 
 from model import Service, Booking, Availability, Barber, Notification
 from auth_utils import login_required, current_user
+from profile_service import apply_account_update
 
 customer_bp = Blueprint("customer", __name__)
 
@@ -43,20 +44,39 @@ def service_detail(service_id):
 
 
 # --------------------------------------------------------------------------- #
-#  Make Booking  (Choose Service Mode + Select Time Slot + Service Address)
+#  Make Booking
+#  Step 1: Pick barber  ->  Step 2: Date & time  ->  Step 3: Confirm
 # --------------------------------------------------------------------------- #
 @customer_bp.route("/book/<int:service_id>", methods=["GET"])
 @login_required
 def book(service_id):
-    """Step 1+2: pick mode + date, then the page shows the open time slots."""
+    """Step 1: pick which barber to book with."""
     service = Service.get(service_id)
     if service is None or not service.active:
         abort(404)
 
-    barber = Barber.first()
-    if barber is None:
+    barbers = Barber.all()
+    if not barbers:
         flash("No barber is available right now. Please try again later.", "error")
         return redirect(url_for("customer.packages"))
+
+    return render_template("customer/book_barber.html",
+                           service=service, barbers=barbers)
+
+
+@customer_bp.route("/book/<int:service_id>/barber/<int:barber_id>",
+                   methods=["GET"])
+@login_required
+def book_times(service_id, barber_id):
+    """Step 2: pick mode + date for the chosen barber; page shows open slots."""
+    service = Service.get(service_id)
+    if service is None or not service.active:
+        abort(404)
+
+    barber = Barber.get(barber_id)
+    if barber is None:
+        flash("That barber is no longer available. Please pick another.", "error")
+        return redirect(url_for("customer.book", service_id=service_id))
 
     mode = request.args.get("mode", "walk_in")
     selected_date = request.args.get("date", "")
@@ -66,7 +86,7 @@ def book(service_id):
 
     if selected_date:
         searched = True
-        # Don't allow booking in the past or on a blocked date.
+        # Don't allow booking in the past or on the barber's blocked date.
         if selected_date < today:
             flash("Please choose today or a future date.", "error")
         elif Availability.is_blocked_date(barber.id, selected_date):
@@ -99,13 +119,18 @@ def _pretty_date(iso_date):
 @customer_bp.route("/book/<int:service_id>/slots", methods=["GET"])
 @login_required
 def book_slots(service_id):
-    """JSON: open time slots for a date, so the page can load them on date
-    click without a full reload. Mirrors the validation in book()."""
+    """JSON: a barber's open time slots for a date, so the page can load them
+    on date click without a full reload. Call as ?barber_id=..&date=YYYY-MM-DD.
+    Mirrors the validation in book_times()."""
     service = Service.get(service_id)
     if service is None or not service.active:
         abort(404)
 
-    barber = Barber.first()
+    try:
+        barber_id = int(request.args.get("barber_id", ""))
+    except (TypeError, ValueError):
+        barber_id = None
+    barber = Barber.get(barber_id) if barber_id is not None else None
     selected_date = request.args.get("date", "")
     today = date_cls.today().isoformat()
 
@@ -122,15 +147,25 @@ def book_slots(service_id):
 @customer_bp.route("/book/<int:service_id>/confirm", methods=["POST"])
 @login_required
 def confirm_booking(service_id):
-    """Step 3: validate everything and save the booking as 'pending'."""
+    """Step 3: validate everything server-side and save the booking.
+
+    Every availability rule is re-checked here (barber valid, date not past, not
+    blocked, slot inside the barber's hours, service fits, not double-booked) so
+    a booking can't be forced through even if the UI is bypassed. The chosen
+    barber is set at creation time; the booking starts 'pending'.
+    """
     service = Service.get(service_id)
     if service is None or not service.active:
         abort(404)
 
-    barber = Barber.first()
+    try:
+        barber_id = int(request.form.get("barber_id", ""))
+    except (TypeError, ValueError):
+        barber_id = None
+    barber = Barber.get(barber_id) if barber_id is not None else None
     if barber is None:
-        flash("No barber is available right now.", "error")
-        return redirect(url_for("customer.packages"))
+        flash("Please pick a barber to book with.", "error")
+        return redirect(url_for("customer.book", service_id=service_id))
 
     mode = request.form.get("mode", "walk_in")
     booking_date = request.form.get("date", "")
@@ -149,35 +184,44 @@ def confirm_booking(service_id):
     if mode == "mobile" and not service_address:
         errors.append("A service address is required for mobile bookings.")
 
-    # Re-validate the slot is still inside availability and free.
+    # Re-validate the slot is still inside THIS barber's availability and free.
+    # open_slots already enforces: open weekday, not blocked, inside working
+    # hours, service fits before closing, not past, not overlapping a booking.
     if not errors:
         open_now = Availability.open_slots(
             barber.id, booking_date, service.duration_minutes)
         if time_slot not in open_now:
-            errors.append("Sorry, that time slot was just taken. Pick another.")
+            errors.append(
+                "Sorry, that time isn't available for this barber anymore. "
+                "Please pick another.")
 
     if errors:
         for e in errors:
             flash(e, "error")
-        return redirect(url_for("customer.book", service_id=service_id,
-                                mode=mode, date=booking_date))
+        return redirect(url_for("customer.book_times", service_id=service_id,
+                                barber_id=barber.id, mode=mode,
+                                date=booking_date))
+
+    # Total is computed server-side (package + mobile fee) - never trust any
+    # total submitted by the client.
+    total_price = Booking.compute_total(service.price, mode)
 
     user = current_user()
     booking = Booking(
-        customer_id=user.id, barber_id=None, service_id=service.id,
+        customer_id=user.id, barber_id=barber.id, service_id=service.id,
         mode=mode, date=booking_date, time_slot=time_slot,
         service_address=service_address if mode == "mobile" else None,
-        status="pending", total_price=service.price)
+        status="pending", total_price=total_price)
     booking.save()
 
-    # Notify the customer that their request is in.
+    # Notify the customer that their request is in (with the chosen barber).
     Notification.push(
         user.id,
-        f"Booking requested: {service.name} on {booking_date} at {time_slot}. "
-        f"Status is pending confirmation.")
+        f"Booking requested with {barber.name}: {service.name} on "
+        f"{booking_date} at {time_slot}. Status is pending confirmation.")
 
-    flash("Booking requested! You'll be notified when the barber confirms.",
-          "success")
+    flash(f"Booking requested with {barber.name}! You'll be notified when "
+          f"they confirm.", "success")
     return redirect(url_for("customer.my_bookings"))
 
 
@@ -224,3 +268,22 @@ def notifications():
     items = Notification.for_user(user.id)
     Notification.mark_all_read(user.id)  # opening the page clears the badge
     return render_template("customer/notifications.html", notifications=items)
+
+
+# --------------------------------------------------------------------------- #
+#  My Account  (view + update own details / password)
+# --------------------------------------------------------------------------- #
+@customer_bp.route("/account", methods=["GET", "POST"])
+@login_required
+def account():
+    user = current_user()
+    # Barbers have their own profile page; keep this one for customers only.
+    if user.role != "customer":
+        return redirect(url_for("barber.profile"))
+
+    if request.method == "POST":
+        apply_account_update(user)  # validates, persists + flashes
+        return redirect(url_for("customer.account"))
+
+    return render_template("customer/account.html",
+                           action_url=url_for("customer.account"))

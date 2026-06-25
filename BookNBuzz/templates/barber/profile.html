@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>My profile</h1>
+    <p class="lead">Manage your details and password. Your name is what
+      customers see (and sets your avatar initials) in the booking flow.</p>
+  </div>
+  <span class="barber-avatar barber-avatar-lg" aria-hidden="true">{{ current_user.initials }}</span>
+</div>
+
+{% include "account/_profile_forms.html" %}
+{% endblock %}

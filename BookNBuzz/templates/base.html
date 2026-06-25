@@ -23,6 +23,7 @@
           <a href="{{ url_for('barber.customers') }}">Customers</a>
           <a href="{{ url_for('barber.availability') }}">Availability</a>
           <a href="{{ url_for('barber.sales') }}">Sales</a>
+          <a href="{{ url_for('barber.profile') }}">Profile</a>
           <a class="btn btn-ghost" href="{{ url_for('auth.logout') }}">Logout</a>
         {% else %}
           <a href="{{ url_for('customer.packages') }}">Packages</a>
@@ -32,6 +33,7 @@
               Notifications
               {% if unread_count %}<span class="badge">{{ unread_count }}</span>{% endif %}
             </a>
+            <a href="{{ url_for('customer.account') }}">My Account</a>
             <a class="btn btn-ghost" href="{{ url_for('auth.logout') }}">Logout</a>
           {% else %}
             <a href="{{ url_for('auth.login') }}">Login</a>

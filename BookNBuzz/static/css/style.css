@@ -333,6 +333,46 @@ td.action-col { white-space: nowrap; }
 }
 .step.active .dot { background: var(--accent); color: #fff; }
 .step.active { color: var(--ink); }
+.step.done .dot { background: var(--ink); color: #fff; }
+.step.done { color: var(--ink); }
+
+/* ---------- Pick-barber step ---------- */
+.barber-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 0.4rem;
+}
+.barber-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.barber-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(20,19,15,0.1);
+}
+.barber-avatar {
+  flex: 0 0 auto;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--accent); color: #fff;
+  font-weight: 800; font-size: 1.2rem;
+  letter-spacing: 0.5px;
+}
+.barber-meta { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.barber-name { font-weight: 700; font-size: 1.05rem; }
+.barber-sub { font-size: 0.85rem; }
 
 .mode-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
 .mode-card {
@@ -494,22 +534,22 @@ td.action-col { white-space: nowrap; }
   box-shadow: 0 0 0 3px rgba(201,138,43,0.25);
 }
 
-/* Disabled (past / blocked / closed): obviously off, not clickable */
+/* Disabled (past / blocked / closed): obviously off, not clickable, but the
+   date number stays clearly readable on a solid gray fill. */
 .cal-day.is-disabled {
   cursor: not-allowed;
-  background: transparent;
+  background: #d8d4cd;
   border-color: transparent;
-  color: #b8b0a2;
-  font-weight: 500;
-  opacity: 0.5;
+  color: #6f6a60;
+  font-weight: 600;
+  opacity: 1;
 }
-.cal-day.is-disabled:hover { background: transparent; transform: none; }
+.cal-day.is-disabled:hover { background: #d8d4cd; transform: none; }
 .cal-day.is-past { text-decoration: line-through; }
 .cal-day.is-blocked {
-  opacity: 0.65;
-  color: #9a8f7e;
+  color: #5c574e;
   background: repeating-linear-gradient(
-    45deg, #efe9e1, #efe9e1 4px, #e3dcd2 4px, #e3dcd2 8px);
+    45deg, #cfc9bf, #cfc9bf 4px, #bcb5a8 4px, #bcb5a8 8px);
 }
 
 .cal-legend {
@@ -531,8 +571,8 @@ td.action-col { white-space: nowrap; }
 .lg-today::before { background: #fff; border: 1.5px solid var(--accent); }
 .lg-blocked::before {
   background: repeating-linear-gradient(
-    45deg, #efe9e1, #efe9e1 3px, #e3dcd2 3px, #e3dcd2 6px);
-  border: 1px solid var(--line);
+    45deg, #cfc9bf, #cfc9bf 3px, #bcb5a8 3px, #bcb5a8 6px);
+  border: 1px solid #b3ab9d;
 }
 .cal-error { color: var(--err); font-weight: 600; font-size: 0.85rem; margin: 0.1rem 0.75rem 0.8rem; }
 
@@ -667,6 +707,33 @@ td.action-col { white-space: nowrap; }
 .summary-box dl { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 1rem; margin: 0; }
 .summary-box dt { color: var(--ink-soft); font-weight: 600; }
 .summary-box dd { margin: 0; text-align: right; font-weight: 600; }
+.summary-box .price-breakdown {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed var(--line);
+}
+.summary-box .total-label,
+.summary-box .total-value {
+  margin-top: 0.3rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+.summary-box .total-value { color: var(--accent, #d98324); }
+
+/* ---------- Account / profile pages ---------- */
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem;
+  align-items: start;
+}
+.barber-avatar-lg {
+  width: 64px; height: 64px;
+  font-size: 1.4rem;
+  flex: 0 0 auto;
+}
 
 /* ---------- Misc ---------- */
 .empty {

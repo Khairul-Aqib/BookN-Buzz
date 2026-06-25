@@ -10,6 +10,7 @@ from flask import Flask, redirect, url_for
 
 import db
 from auth_utils import current_user
+from model import MOBILE_SERVICE_FEE
 from views.auth import auth_bp
 from views.customer import customer_bp
 from views.barber import barber_bp
@@ -40,7 +41,8 @@ def create_app():
         unread = 0
         if user is not None and user.role == "customer":
             unread = user.unread_count()
-        return {"current_user": user, "unread_count": unread}
+        return {"current_user": user, "unread_count": unread,
+                "mobile_fee": MOBILE_SERVICE_FEE}
 
     # Pretty currency filter used across templates.
     @app.template_filter("money")
