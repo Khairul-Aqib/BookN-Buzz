@@ -15,19 +15,13 @@ module, Jinja2 templates and plain HTML/CSS.
 
 ## Quick start
 
-This project already has a virtual environment in the parent `BookN'Buzz`
-folder. Activate it from **PowerShell** with:
+Create and activate a virtual environment:
 
 ```powershell
-& "C:\Users\khair\Downloads\BookN'Buzz\.venv\Scripts\Activate.ps1"
-```
-
-Or create a fresh one if you prefer:
-
-```bash
 python -m venv venv
-venv\Scripts\activate        # Windows (cmd)
-# source venv/bin/activate   # macOS / Linux
+venv\Scripts\Activate.ps1      # Windows (PowerShell)
+# venv\Scripts\activate        # Windows (cmd)
+# source venv/bin/activate     # macOS / Linux
 ```
 
 Then install and run:
@@ -49,12 +43,18 @@ Then open **http://localhost:5000**.
 
 | Role           | Email                   | Password      |
 |----------------|-------------------------|---------------|
-| Barber / admin | `barber@booknbuzz.com`  | `barber123`   |
+| Barber / admin | `marcus@booknbuzz.com`  | `barber123`   |
+| Barber / admin | `theo@booknbuzz.com`    | `barber123`   |
+| Barber / admin | `aisha@booknbuzz.com`   | `barber123`   |
 | Customer       | `alex@example.com`      | `password123` |
 | Customer       | `sam@example.com`       | `password123` |
 | Customer       | `jordan@example.com`    | `password123` |
 
-You can also register a brand-new customer account from the **Sign up** page.
+The demo data seeds **3 barbers** (all `barber123`) and **6 customers** (all
+`password123`); the remaining customers are `nadia@`, `weijie@` and `priya@`
+`example.com`. You can also register a brand-new customer account from the
+**Sign up** page, and any logged-in user can edit their own details / password
+from the **My Account** (customer) or **Profile** (barber) page.
 
 ## Architecture → class diagram mapping
 
@@ -98,11 +98,13 @@ Every use case from the BookN'Buzz use-case diagram is an identifiable route.
 | Register Account       | `auth.register`                                   |
 | Login / Logout         | `auth.login` / `auth.logout`                      |
 | Browse Packages        | `customer.packages`, `customer.service_detail`    |
-| Choose Service Mode    | `customer.book` (walk-in / mobile)                |
-| Make Booking + Select Time Slot + Service Address | `customer.book` → `customer.confirm_booking` |
+| Pick Barber            | `customer.book`                                   |
+| Choose Mode + Date + Time Slot + Service Address | `customer.book_times` (walk-in / mobile) |
+| Make Booking           | `customer.confirm_booking`                        |
 | View My Bookings       | `customer.my_bookings`                            |
 | Cancel Booking         | `customer.cancel_booking`                         |
 | View Notifications     | `customer.notifications`                          |
+| View / Edit My Account | `customer.account` (details + change password)    |
 
 **Barber / admin** (`views/barber.py`)
 
@@ -114,27 +116,49 @@ Every use case from the BookN'Buzz use-case diagram is an identifiable route.
 | View Sales               | `barber.sales`                                         |
 | Create Barber Account    | `barber.barber_new`                                    |
 | Manage Availability      | `barber.availability`, `availability_delete`           |
-| Manage Bookings          | `barber.bookings`                                      |
+| Manage Bookings          | `barber.bookings` (confirm / claim / release)          |
 | Update Booking Status    | `barber.update_status` (→ creates a Notification)      |
+| Edit Profile             | `barber.profile` (details + change password)           |
 
 ## Booking process flow
 
-Customer logs in → browses packages → picks a service → chooses mode (walk-in or
-mobile; mobile requires a service address) → the system shows only time slots
-that fit the shop's availability and are not already booked → confirms →
-booking is saved as **pending** and **unclaimed** (no barber yet) plus a
-notification → any barber can **claim** it from the shared Bookings page → the
-claiming barber updates the status (pending → confirmed → completed / cancelled)
-→ the customer sees the change in *My Bookings* and *Notifications*.
+Customer logs in → browses packages → picks a service → **picks a barber** →
+chooses mode (walk-in or mobile; mobile requires a service address) and a date →
+the system shows only that barber's time slots that fit their availability and
+are not already booked → confirms → the **total is computed server-side**
+(package price, plus a flat **RM25 mobile fee** for mobile bookings) → the
+booking is saved as **pending**, assigned to the chosen barber, plus a
+notification → that barber **confirms** it (pending → confirmed) and later marks
+it **completed / cancelled** → the customer sees the change in *My Bookings* and
+*Notifications*.
+
+### Mobile service fee
+
+Mobile bookings (the barber travels to the customer) add a flat surcharge on top
+of the package price; walk-in bookings have no fee. The amount is defined **once**
+as `MOBILE_SERVICE_FEE` in `model.py` and applied through `Booking.compute_total`,
+which is the single source of truth used by the confirm flow, the booking summary
+and the seed data. The booking summary shows it as its own line:
+
+```
+Package      RM18.00
+Mobile fee   RM25.00
+Total        RM43.00
+```
+
+The fee line is hidden for walk-in bookings, and the total is always recomputed
+server-side on confirm — the client-side figure is never trusted.
 
 ### Shared bookings & claiming
 
-All barber accounts see **every** booking. An unclaimed booking shows its barber
-as **N/A** with a **Claim** button; once a barber claims it, the booking shows
-that barber's name (and the owner can **Release** it back to the pool). Any
-barber may update the status of any booking. `barber_id` on `bookings` is
-nullable (NULL = unclaimed), and the double-booking unique index is shop-wide
-(`date, time_slot`) so a slot can be held only once regardless of barber.
+All barber accounts see **every** booking. New bookings arrive already assigned
+to the barber the customer chose (status **pending**), and that barber
+**confirms** them. Any legacy **unclaimed** booking (`barber_id` NULL) shows its
+barber as **N/A** with a **Claim** button; once claimed it shows that barber's
+name, and the owner can **Release** it back to the pool. `barber_id` on
+`bookings` is nullable, and the double-booking unique index is **per-barber**
+(`barber_id, date, time_slot`, cancelled excluded) so two barbers can each hold
+the same slot but one barber can't be booked twice.
 
 ## Security / validation notes
 
@@ -148,16 +172,17 @@ nullable (NULL = unclaimed), and the double-booking unique index is shop-wide
 ## Project structure
 
 ```
-app.py            # creates the Flask app, registers blueprints (View)
-db.py             # sqlite3 connection + CRUD helpers (Model)
-model.py          # OOP classes matching the class diagram (Model)
-schema.sql        # table definitions
-seed.py           # builds the DB + demo data
-auth_utils.py     # session helpers + access-control decorators
-requirements.txt  # Flask only
-views/            # auth.py, customer.py, barber.py (View blueprints)
-templates/        # base.html + page templates (Template)
-static/           # css/, images/, js/calendar.js (booking calendar)
+app.py             # creates the Flask app, registers blueprints (View)
+db.py              # sqlite3 connection + CRUD helpers (Model)
+model.py           # OOP classes + MOBILE_SERVICE_FEE constant (Model)
+schema.sql         # table definitions
+seed.py            # builds the DB + demo data
+auth_utils.py      # session helpers + access-control decorators
+profile_service.py # shared account/password update logic + validation
+requirements.txt   # Flask only
+views/             # auth.py, customer.py, barber.py (View blueprints)
+templates/         # base.html + page templates, incl. account/ (Template)
+static/            # css/, images/, js/calendar.js (booking calendar)
 ```
 
 ## Resetting the database
