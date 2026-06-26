@@ -1,9 +1,0 @@
-{# BARBER column - shows who owns the booking (name / N/A only).
-   The Claim / Release action lives in its own column (_claim_cell.html). #}
-{% if b.barber_id is none %}
-  <span class="status status-na">N/A</span>
-{% elif b.barber_id == current_user.id %}
-  <span class="barber-name">{{ b.barber_name }} <span class="muted">(you)</span></span>
-{% else %}
-  <span class="barber-name">{{ b.barber_name }}</span>
-{% endif %}

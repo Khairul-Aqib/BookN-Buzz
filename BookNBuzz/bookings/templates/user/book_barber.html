@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load booknbuzz_extras %}
+{% block title %}Pick a barber · {{ service.name }}{% endblock %}
+
+{% block content %}
+<p><a class="muted" href="{% url 'customer_service_detail' service_id=service.id %}">&larr; Back to {{ service.name }}</a></p>
+
+<div class="steps">
+  <div class="step active"><span class="dot">1</span> Pick barber</div>
+  <div class="step"><span class="dot">2</span> Date &amp; time</div>
+  <div class="step"><span class="dot">3</span> Confirm</div>
+</div>
+
+<h1>Choose your barber</h1>
+<p class="lead">{{ service.price|money }} · {{ service.duration_minutes }} min · pick who you'd like to book with.</p>
+
+<div class="barber-grid">
+  {% for barber in barbers %}
+    <a class="barber-card"
+       href="{% url 'customer_book_times' service_id=service.id barber_id=barber.id %}">
+      <span class="barber-avatar" aria-hidden="true">{{ barber.initials }}</span>
+      <span class="barber-meta">
+        <span class="barber-name">{{ barber.name }}</span>
+        <span class="barber-sub muted">View availability &rarr;</span>
+      </span>
+    </a>
+  {% endfor %}
+</div>
+{% endblock %}

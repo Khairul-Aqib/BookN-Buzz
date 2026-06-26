@@ -1,0 +1,52 @@
+{% comment %} Shared account forms used by both the customer account page and the barber
+   profile page. Both forms post back to the page that rendered them (empty
+   action = current URL). Values prefill from the logged-in user. {% endcomment %}
+<div class="account-grid">
+  <div class="panel narrow">
+    <h2>Your details</h2>
+    <p class="muted">Update the name, email and phone on your account.</p>
+    <form method="post" action="">
+      {% csrf_token %}
+      <input type="hidden" name="form" value="details">
+      <div class="form-row">
+        <label for="name">Full name</label>
+        <input type="text" id="name" name="name"
+               value="{{ current_user.name|default:'' }}" required>
+      </div>
+      <div class="form-row">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email"
+               value="{{ current_user.email|default:'' }}" required>
+      </div>
+      <div class="form-row">
+        <label for="phone">Phone <span class="muted">(optional)</span></label>
+        <input type="text" id="phone" name="phone"
+               value="{{ current_user.phone|default:'' }}">
+      </div>
+      <button class="btn btn-solid" type="submit">Save changes</button>
+    </form>
+  </div>
+
+  <div class="panel narrow">
+    <h2>Change password</h2>
+    <p class="muted">Enter your current password, then choose a new one.</p>
+    <form method="post" action="">
+      {% csrf_token %}
+      <input type="hidden" name="form" value="password">
+      <div class="form-row">
+        <label for="current_password">Current password</label>
+        <input type="password" id="current_password" name="current_password" required>
+      </div>
+      <div class="form-row">
+        <label for="new_password">New password</label>
+        <input type="password" id="new_password" name="new_password" required>
+        <span class="form-hint">At least 6 characters.</span>
+      </div>
+      <div class="form-row">
+        <label for="confirm_password">Confirm new password</label>
+        <input type="password" id="confirm_password" name="confirm_password" required>
+      </div>
+      <button class="btn btn-solid" type="submit">Update password</button>
+    </form>
+  </div>
+</div>

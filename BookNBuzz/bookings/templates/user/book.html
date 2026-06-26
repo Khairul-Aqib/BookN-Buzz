@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load static %}
+{% load booknbuzz_extras %}
+{% block title %}Book {{ service.name }}{% endblock %}
+
+{% block content %}
+<p><a class="muted" href="{% url 'customer_book' service_id=service.id %}">&larr; Change barber</a></p>
+
+<div class="steps">
+  <div class="step done"><span class="dot">1</span> Pick barber</div>
+  <div class="step active"><span class="dot">2</span> Date &amp; time</div>
+  <div class="step {% if searched %}active{% endif %}"><span class="dot">3</span> Confirm</div>
+</div>
+
+<h1>Book: {{ service.name }}</h1>
+<p class="lead">{{ service.price|money }} · {{ service.duration_minutes }} min · with
+  <strong>{{ barber.name }}</strong></p>
+
+<!-- Booking step: two columns. Left = mode + calendar (+ mobile address),
+     Right = available time slots + live summary + confirm. Calendar and slots
+     reflect THIS barber's hours / blocked days. -->
+<div class="panel booking-panel"
+     data-slots-url="{% url 'customer_book_slots' service_id=service.id %}"
+     data-barber-id="{{ barber.id }}">
+  <div class="booking-layout">
+
+    <!-- LEFT column ---------------------------------------------------------->
+    <div class="booking-left">
+      {% comment %} No-JS path: this GET form reloads the page with the chosen date's
+         slots. With JS, calendar.js loads slots on date click and hides the
+         submit button below. {% endcomment %}
+      <form method="get" action="{% url 'customer_book_times' service_id=service.id barber_id=barber.id %}" id="dateForm">
+        <h3>Choose mode &amp; date</h3>
+
+        <div class="mode-options" style="margin:0.8rem 0 1rem;">
+          <label class="mode-card">
+            <input type="radio" name="mode" value="walk_in" {% if mode != 'mobile' %}checked{% endif %}>
+            <span class="mode-title">Walk-in</span>
+            <div class="mode-sub">Come to the shop chair.</div>
+          </label>
+          <label class="mode-card">
+            <input type="radio" name="mode" value="mobile" {% if mode == 'mobile' %}checked{% endif %}>
+            <span class="mode-title">Mobile</span>
+            <div class="mode-sub">We come to your address.</div>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label for="date">Date</label>
+
+          {% comment %} Native date input: the no-JS fallback. The custom calendar below
+             enhances it when JavaScript is available and writes into it. {% endcomment %}
+          <input type="date" id="date" name="date" value="{{ selected_date }}"
+                 min="{{ today }}" required>
+
+          {% comment %} Custom month calendar (revealed by calendar.js). Past dates and
+             barber-blocked / non-working days are disabled here in the UI, and
+             the same rules are re-checked server-side on submit. {% endcomment %}
+          <div id="bnb-calendar" class="calendar" hidden
+               data-today="{{ today }}"
+               data-selected="{{ selected_date }}"
+               data-blocked='{{ blocked_dates|tojson }}'
+               data-weekdays='{{ working_weekdays|tojson }}'>
+            <div class="cal-head">
+              <button type="button" class="cal-nav cal-prev" aria-label="Previous month">&lsaquo;</button>
+              <span class="cal-title"></span>
+              <button type="button" class="cal-nav cal-next" aria-label="Next month">&rsaquo;</button>
+            </div>
+            <div class="cal-weekdays">
+              <span>Mon</span><span>Tue</span><span>Wed</span>
+              <span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+            <div class="cal-grid" role="grid"></div>
+            <div class="cal-legend">
+              <span class="lg lg-selectable">Available</span>
+              <span class="lg lg-today">Today</span>
+              <span class="lg lg-blocked">Unavailable</span>
+            </div>
+            <p class="cal-error" role="alert" hidden>Please pick an available date.</p>
+          </div>
+        </div>
+
+        <button class="btn btn-solid" id="findBtn" type="submit">Find available times</button>
+      </form>
+
+      {% comment %} Mobile address lives in the left column but submits with the confirm
+         form (form="confirmForm"). calendar.js shows/hides it with the mode. {% endcomment %}
+      <div class="form-row address-block" id="addressBlock" {% if mode != 'mobile' %}hidden{% endif %}>
+        <label for="service_address">Service address <span class="muted">(required for mobile)</span></label>
+        <textarea id="service_address" name="service_address" form="confirmForm"
+                  placeholder="Street, number, apartment, city..."
+                  {% if mode == 'mobile' %}required{% endif %}></textarea>
+      </div>
+    </div>
+
+    <!-- RIGHT column --------------------------------------------------------->
+    <div class="booking-right">
+      <form method="post" action="{% url 'customer_confirm_booking' service_id=service.id %}" id="confirmForm">
+        {% csrf_token %}
+        <input type="hidden" name="barber_id" value="{{ barber.id }}">
+        <input type="hidden" name="mode" id="confirmMode" value="{{ mode }}">
+        <input type="hidden" name="date" id="confirmDate" value="{{ selected_date }}">
+
+        <h3 class="slots-heading" id="slotsHeading">
+          {% if selected_date %}Times for {{ selected_date_label }}{% else %}Available times{% endif %}
+        </h3>
+
+        <div class="slots-area" id="slotsArea">
+          {% if searched and slots %}
+            <div class="slot-grid">
+              {% for slot in slots %}
+                <div class="slot">
+                  <input type="radio" id="slot-{{ slot }}" name="time_slot" value="{{ slot }}" required>
+                  <label for="slot-{{ slot }}">{{ slot }}</label>
+                </div>
+              {% endfor %}
+            </div>
+          {% elif searched %}
+            <div class="empty">
+              <img src="{% static 'images/empty.svg' %}" alt="">
+              <p>No open times for this date. {{ barber.name }} may be fully booked,
+                 off, or that day is blocked. Try another date.</p>
+            </div>
+          {% else %}
+            <p class="slots-hint muted">Pick a date on the calendar to see open time slots.</p>
+          {% endif %}
+        </div>
+
+        <div class="summary-box booking-summary"
+             data-package-price="{{ service.price|floatformat:2 }}"
+             data-mobile-fee="{{ mobile_fee|floatformat:2 }}">
+          <dl>
+            <dt>Service</dt><dd>{{ service.name }}</dd>
+            <dt>Barber</dt><dd>{{ barber.name }}</dd>
+            <dt>Mode</dt><dd id="sumMode">{% if mode == 'mobile' %}Mobile{% else %}Walk-in{% endif %}</dd>
+            <dt>Date</dt><dd id="sumDate">{{ selected_date_label|default:'—' }}</dd>
+            <dt>Time</dt><dd id="sumTime">—</dd>
+          </dl>
+          <dl class="price-breakdown">
+            <dt>Package</dt><dd>{{ service.price|money }}</dd>
+            <dt class="fee-row" id="feeLabel" {% if mode != 'mobile' %}hidden{% endif %}>Mobile fee</dt>
+            <dd class="fee-row" id="feeValue" {% if mode != 'mobile' %}hidden{% endif %}>{{ mobile_fee|money }}</dd>
+            <dt class="total-label">Total</dt>
+            <dd class="total-value" id="sumTotal">{{ initial_total|money }}</dd>
+          </dl>
+        </div>
+
+        <button class="btn btn-solid btn-block" type="submit">Confirm booking</button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/calendar.js' %}"></script>
+{% endblock %}

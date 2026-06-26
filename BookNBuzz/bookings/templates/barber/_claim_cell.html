@@ -1,0 +1,26 @@
+{% comment %} CLAIM / CONFIRM / RELEASE column - dedicated action cell. Expects `b`.
+   - booking assigned to me & pending  -> Confirm (primary, orange)
+   - booking I own (confirmed)         -> Release (secondary, outline)
+   - legacy unclaimed booking          -> Claim (primary, orange)
+   - anything else                     -> dash {% endcomment %}
+{% if b.barber_id == current_user.id and b.status == 'pending' %}
+  <form class="inline-form" method="post"
+        action="{% url 'barber_confirm_booking' booking_id=b.id %}">
+    {% csrf_token %}
+    <button class="btn btn-solid btn-sm" type="submit">Confirm</button>
+  </form>
+{% elif b.barber_id == current_user.id and b.status == 'confirmed' %}
+  <form class="inline-form" method="post"
+        action="{% url 'barber_release_booking' booking_id=b.id %}">
+    {% csrf_token %}
+    <button class="btn btn-outline btn-sm" type="submit">Release</button>
+  </form>
+{% elif not b.barber_id and b.status != 'cancelled' and b.status != 'completed' %}
+  <form class="inline-form" method="post"
+        action="{% url 'barber_claim_booking' booking_id=b.id %}">
+    {% csrf_token %}
+    <button class="btn btn-solid btn-sm" type="submit">Claim</button>
+  </form>
+{% else %}
+  <span class="muted">—</span>
+{% endif %}

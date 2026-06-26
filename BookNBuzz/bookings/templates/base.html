@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}BookN'Buzz{% endblock %} · BookN'Buzz</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="icon" href="{% static 'images/logo.svg' %}">
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="{% url 'customer_home' %}">
+        <img src="{% static 'images/logo.svg' %}" alt="" class="brand-mark">
+        <span>BookN<span class="accent">'</span>Buzz</span>
+      </a>
+
+      <nav class="nav-links">
+        {% if current_user and current_user.role == 'barber' %}
+          <a href="{% url 'barber_dashboard' %}">Dashboard</a>
+          <a href="{% url 'barber_bookings' %}">Bookings</a>
+          <a href="{% url 'barber_services' %}">Services</a>
+          <a href="{% url 'barber_customers' %}">Customers</a>
+          <a href="{% url 'barber_availability' %}">Availability</a>
+          <a href="{% url 'barber_sales' %}">Sales</a>
+          <a href="{% url 'barber_profile' %}">Profile</a>
+          <a class="btn btn-ghost" href="{% url 'auth_logout' %}">Logout</a>
+        {% else %}
+          <a href="{% url 'customer_packages' %}">Packages</a>
+          {% if current_user %}
+            <a href="{% url 'customer_my_bookings' %}">My Bookings</a>
+            <a class="has-badge" href="{% url 'customer_notifications' %}">
+              Notifications
+              {% if unread_count %}<span class="badge">{{ unread_count }}</span>{% endif %}
+            </a>
+            <a href="{% url 'customer_account' %}">My Account</a>
+            <a class="btn btn-ghost" href="{% url 'auth_logout' %}">Logout</a>
+          {% else %}
+            <a href="{% url 'auth_login' %}">Login</a>
+            <a class="btn btn-solid" href="{% url 'auth_register' %}">Sign up</a>
+          {% endif %}
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="page {% block page_class %}{% endblock %}">
+    {% if messages %}
+      <div class="flash-stack">
+        {% for message in messages %}
+          <div class="flash flash-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>BookN'Buzz · Sharp cuts, booked in seconds.</span>
+    </div>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

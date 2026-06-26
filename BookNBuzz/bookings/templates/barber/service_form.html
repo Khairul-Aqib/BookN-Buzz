@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{% if action == 'edit' %}Edit{% else %}New{% endif %} Service{% endblock %}
+
+{% block content %}
+<p><a class="muted" href="{% url 'barber_services' %}">&larr; Back to services</a></p>
+
+<div class="panel narrow" style="max-width:560px;">
+  <h1>{% if action == 'edit' %}Edit service{% else %}New service{% endif %}</h1>
+
+  <form method="post"
+        action="{% if action == 'edit' %}{% url 'barber_service_edit' service_id=service.id %}{% else %}{% url 'barber_service_new' %}{% endif %}">
+    {% csrf_token %}
+    <div class="form-row">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" value="{{ service.name|default:'' }}" required>
+    </div>
+    <div class="form-row">
+      <label for="description">Description</label>
+      <textarea id="description" name="description">{{ service.description|default:'' }}</textarea>
+    </div>
+    <div class="form-row">
+      <label for="duration_minutes">Duration (minutes)</label>
+      <input type="number" id="duration_minutes" name="duration_minutes" min="5" step="5"
+             value="{% if service %}{{ service.duration_minutes }}{% else %}30{% endif %}" required>
+    </div>
+    <div class="form-row">
+      <label for="price">Price (RM)</label>
+      <input type="number" id="price" name="price" min="0" step="0.01"
+             value="{% if service %}{{ service.price|floatformat:2 }}{% else %}0.00{% endif %}" required>
+    </div>
+    <div class="form-row">
+      <label for="image">Image file <span class="muted">(in static/images)</span></label>
+      <input type="text" id="image" name="image"
+             value="{% if service %}{{ service.image }}{% else %}default.svg{% endif %}"
+             placeholder="default.svg">
+      <span class="form-hint">e.g. ClassicCut.jpg, SkinFade.jpg, default.svg</span>
+    </div>
+    <div class="form-row checkbox-row">
+      <input type="checkbox" id="active" name="active"
+             {% if not service or service.active %}checked{% endif %}>
+      <label for="active" style="font-weight:600;">Active (visible to customers)</label>
+    </div>
+    <button class="btn btn-solid" type="submit">Save service</button>
+  </form>
+</div>
+{% endblock %}

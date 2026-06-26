@@ -1,0 +1,19 @@
+{% load static %}
+{% load booknbuzz_extras %}
+{% with img=s.image|default:'default.svg' %}
+<article class="card">
+  <a class="card-img" href="{% url 'customer_service_detail' service_id=s.id %}">
+    <img src="{% static 'images/'|add:img %}" alt="{{ s.name }}">
+  </a>
+  <div class="card-body">
+    <h3>{{ s.name }}</h3>
+    <p class="card-desc">{{ s.description }}</p>
+    <div class="price-row">
+      <span class="price">{{ s.price|money }}</span>
+      <span class="pill">{{ s.duration_minutes }} min</span>
+    </div>
+    <a class="btn btn-dark btn-block" style="margin-top:0.6rem;"
+       href="{% url 'customer_book' service_id=s.id %}">Book this</a>
+  </div>
+</article>
+{% endwith %}

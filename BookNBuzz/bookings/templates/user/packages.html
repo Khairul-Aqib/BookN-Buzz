@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Packages{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>Grooming packages</h1>
+    <p class="lead">Pick your look — every package can be a walk-in or mobile visit.</p>
+  </div>
+</div>
+
+{% if services %}
+  <div class="grid">
+    {% for s in services %}
+      {% include "user/_service_card.html" %}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty">
+    <img src="{% static 'images/empty.svg' %}" alt="">
+    <p>No packages are available just yet. Check back soon.</p>
+  </div>
+{% endif %}
+{% endblock %}

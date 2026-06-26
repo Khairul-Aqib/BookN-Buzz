@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>Notifications</h1>
+    <p class="lead">Updates on your bookings and account.</p>
+  </div>
+</div>
+
+{% if notifications %}
+  {% for n in notifications %}
+    <div class="notif {% if n.is_read %}read{% endif %}">
+      <img src="{% static 'images/logo.svg' %}" alt="" width="26" height="26">
+      <div>
+        <div>{{ n.message }}</div>
+        <div class="when">{{ n.created_at|date:'Y-m-d H:i' }}</div>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="empty">
+    <img src="{% static 'images/empty.svg' %}" alt="">
+    <p>No notifications yet.</p>
+  </div>
+{% endif %}
+{% endblock %}

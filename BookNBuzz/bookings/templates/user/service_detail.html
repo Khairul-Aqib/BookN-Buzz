@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+{% load booknbuzz_extras %}
+{% block title %}{{ service.name }}{% endblock %}
+
+{% block content %}
+<p><a class="muted" href="{% url 'customer_packages' %}">&larr; Back to packages</a></p>
+
+{% with img=service.image|default:'default.svg' %}
+<div class="detail-grid">
+  <div class="detail-img">
+    <img src="{% static 'images/'|add:img %}" alt="{{ service.name }}">
+  </div>
+  <div>
+    <p class="eyebrow">Grooming package</p>
+    <h1>{{ service.name }}</h1>
+    <p class="lead">{{ service.description }}</p>
+
+    <div class="summary-box">
+      <dl>
+        <dt>Price</dt><dd>{{ service.price|money }}</dd>
+        <dt>Duration</dt><dd>{{ service.duration_minutes }} minutes</dd>
+        <dt>Modes</dt><dd>Walk-in &amp; Mobile</dd>
+      </dl>
+    </div>
+
+    <a class="btn btn-solid" href="{% url 'customer_book' service_id=service.id %}">
+      Book this package
+    </a>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

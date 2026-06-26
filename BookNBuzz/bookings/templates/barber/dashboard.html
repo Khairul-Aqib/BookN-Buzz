@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load booknbuzz_extras %}
+{% block title %}Dashboard{% endblock %}
+{% block page_class %}page-wide{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="lead">Welcome back, {{ current_user.name }}.</p>
+  </div>
+  <a class="btn btn-solid" href="{% url 'barber_barber_new' %}">+ New barber account</a>
+</div>
+
+<div class="stats">
+  <div class="stat accent-stat">
+    <div class="num">{{ stats.today }}</div>
+    <div class="label">Bookings today</div>
+  </div>
+  <div class="stat">
+    <div class="num">{{ stats.pending }}</div>
+    <div class="label">Pending</div>
+  </div>
+  <div class="stat">
+    <div class="num">{{ stats.unclaimed }}</div>
+    <div class="label">Unclaimed (N/A)</div>
+  </div>
+  <div class="stat">
+    <div class="num">{{ stats.total }}</div>
+    <div class="label">Total bookings</div>
+  </div>
+  <div class="stat">
+    <div class="num">{{ stats.revenue|money }}</div>
+    <div class="label">Revenue (completed)</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="section-head" style="margin-bottom:0.8rem;">
+    <h3 style="margin:0;">Today's bookings</h3>
+    <a class="muted" href="{% url 'barber_bookings' %}">Manage all bookings &rarr;</a>
+  </div>
+
+  {% if todays %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Time</th><th>Customer</th><th>Service</th><th>Mode</th><th>Barber</th><th>Claim / Release</th><th>Status</th><th>Update</th></tr>
+      </thead>
+      <tbody>
+        {% for b in todays %}
+        <tr>
+          <td><strong>{{ b.time_slot }}</strong></td>
+          <td>{{ b.customer_name }}<div class="muted">{{ b.customer_phone|default:b.customer_email }}</div></td>
+          <td>{{ b.service_name }}</td>
+          <td>{% if b.mode == 'mobile' %}Mobile{% else %}Walk-in{% endif %}</td>
+          <td class="barber-col">{% include "barber/_barber_cell.html" %}</td>
+          <td class="action-col">{% include "barber/_claim_cell.html" %}</td>
+          <td><span class="status status-{{ b.status }}">{{ b.status }}</span></td>
+          <td>{% include "barber/_status_form.html" %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="muted">No bookings scheduled for today.</p>
+  {% endif %}
+</div>
+{% endblock %}
